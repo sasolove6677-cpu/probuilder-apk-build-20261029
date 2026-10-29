@@ -1,0 +1,39 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+    id 'dev.flutter.flutter-gradle-plugin'
+}
+
+android {
+    namespace 'com.waelatef.probuilder'
+    compileSdk flutter.compileSdkVersion
+    ndkVersion flutter.ndkVersion
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+
+    defaultConfig {
+        applicationId 'com.waelatef.probuilder'
+        minSdk flutter.minSdkVersion
+        targetSdk flutter.targetSdkVersion
+        versionCode flutter.versionCode
+        versionName flutter.versionName
+    }
+}
+
+flutter {
+    source '../..'
+}
+
+dependencies {
+    // Included for a future signed-template implementation. The current native bridge
+    // deliberately does not claim to create an APK inside the Android app.
+    implementation 'com.android.tools.build:apksig:8.6.1'
+    implementation 'org.bouncycastle:bcpkix-jdk18on:1.79'
+}

@@ -1,0 +1,47 @@
+name: Build installable Android APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate launcher icons
+        run: dart run flutter_launcher_icons
+
+      - name: Build installable debug APK
+        run: flutter build apk --debug
+
+      - name: Publish APK as a public GitHub Release asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="apk-build-${GITHUB_RUN_NUMBER}"
+          gh release create "$TAG" \
+            build/app/outputs/flutter-apk/app-debug.apk \
+            --title "Pro Builder installable APK" \
+            --notes "Debug-signed APK for installation and testing. The in-app APK conversion engine remains a host-builder placeholder; see the project README."
