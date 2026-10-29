@@ -4,7 +4,7 @@ Pro Builder is a Flutter app with an Arabic/English interface and an Android-nat
 
 ## Cloud build pipeline
 
-The GitHub Actions workflow builds `template_webview_source` into a real debug-signed `template.apk`, creates a test-only JKS debug key, and places both at `android/app/src/main/assets/` before building Pro Builder. It runs a JVM smoke test that replaces `assets/index.html` and verifies the resulting APK signature, then publishes the installable Pro Builder APK as a GitHub Release asset.
+The GitHub Actions workflow builds `template_webview_source` into a real debug-signed `template.apk`, creates a test-only RSA PKCS#8 private key and X.509 certificate, and places all three at `android/app/src/main/assets/` before building Pro Builder. It runs JVM and on-device smoke tests that replace `assets/index.html` and verify the resulting APK signature, then publishes the installable Pro Builder APK as a GitHub Release asset.
 
 A locally downloaded source tree does not include the generated APK template or key. Run the Actions workflow to generate them; the workflow creates these files during CI and keeps the binary template and key out of source control.
 
@@ -20,7 +20,7 @@ The template packages only the selected HTML file. Keep CSS, JavaScript, and ima
 
 ## Debug signing notice
 
-The bundled JKS is a public, test-only Android debug key with the standard debug password. It is intentionally included so the app can sign generated test APKs on-device. Anyone with the Pro Builder APK can extract it. Do not use this key for production, commercial releases, trusted updates, or any app whose signing identity must remain private. Use a protected release key and a controlled signing service for production distribution.
+The bundled PKCS#8 private key is unencrypted and is paired with a public X.509 certificate so Android can load it without unsupported PKCS#12 password-based encryption algorithms. It is intentionally included only so the app can sign generated test APKs on-device; anyone with the Pro Builder APK can extract it. Do not use this key for production, commercial releases, trusted updates, or any app whose signing identity must remain private. Use a protected release key and a controlled signing service for production distribution.
 
 ## Requirements and commands
 

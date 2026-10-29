@@ -13,7 +13,8 @@ class ApkTemplateBuildTest {
     @Test
     fun replacesHtmlAndProducesAValidSignedApk() {
         val template = projectAsset("template.apk")
-        val keystore = projectAsset(ApkTemplateSigning.KEYSTORE_ASSET)
+        val privateKey = projectAsset(ApkTemplateSigning.PRIVATE_KEY_ASSET)
+        val certificate = projectAsset(ApkTemplateSigning.CERTIFICATE_ASSET)
         val work = Files.createTempDirectory("pro-builder-apk-test").toFile()
         try {
             val htmlText = "<!doctype html><html><body><h1>Device builder smoke test</h1></body></html>"
@@ -22,7 +23,7 @@ class ApkTemplateBuildTest {
             val signed = File(work, "injected-signed.apk")
 
             ApkTemplateAssembler.injectHtml(template, html, unsigned)
-            ApkTemplateSigning.sign(unsigned, signed, keystore)
+            ApkTemplateSigning.sign(unsigned, signed, privateKey, certificate)
 
             val verification = ApkVerifier.Builder(signed).build().verify()
             assertTrue("ApkSig did not verify the injected APK: $verification", verification.isVerified)

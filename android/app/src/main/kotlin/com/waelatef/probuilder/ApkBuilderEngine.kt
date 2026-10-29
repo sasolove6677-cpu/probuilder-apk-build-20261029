@@ -38,7 +38,8 @@ class ApkBuilderEngine(private val context: Context) {
 
         try {
             val templateApk = File(workDir, "template.apk")
-            val keystore = File(workDir, ApkTemplateSigning.KEYSTORE_ASSET)
+            val signingPrivateKey = File(workDir, ApkTemplateSigning.PRIVATE_KEY_ASSET)
+            val signingCertificate = File(workDir, ApkTemplateSigning.CERTIFICATE_ASSET)
             val unsignedApk = File(workDir, "modified-unsigned.apk")
             val signedApk = File(workDir, "modified-signed.apk")
 
@@ -51,15 +52,18 @@ class ApkBuilderEngine(private val context: Context) {
             }
 
             try {
-                context.assets.open(ApkTemplateSigning.KEYSTORE_ASSET).use { input ->
-                    FileOutputStream(keystore).use { output -> input.copyTo(output) }
+                context.assets.open(ApkTemplateSigning.PRIVATE_KEY_ASSET).use { input ->
+                    FileOutputStream(signingPrivateKey).use { output -> input.copyTo(output) }
+                }
+                context.assets.open(ApkTemplateSigning.CERTIFICATE_ASSET).use { input ->
+                    FileOutputStream(signingCertificate).use { output -> input.copyTo(output) }
                 }
             } catch (_: IOException) {
-                return failure("SIGNING_KEY_MISSING", "The test signing key is missing from this build.")
+                return failure("SIGNING_KEY_MISSING", "The APK signing key or certificate is missing from this build.")
             }
 
             ApkTemplateAssembler.injectHtml(templateApk, html, unsignedApk)
-            ApkTemplateSigning.sign(unsignedApk, signedApk, keystore)
+            ApkTemplateSigning.sign(unsignedApk, signedApk, signingPrivateKey, signingCertificate)
             val outputName = makeOutputName(html)
             val savedLocation = saveToDownloads(signedApk, outputName)
 

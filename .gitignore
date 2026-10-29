@@ -10,4 +10,5 @@ android/local.properties
 android/.gradle/
 *.iml
 /android/app/src/main/assets/template.apk
-/android/app/src/main/assets/probuilder-debug.keystore
+/android/app/src/main/assets/probuilder-debug.pk8
+/android/app/src/main/assets/probuilder-debug-cert.der
