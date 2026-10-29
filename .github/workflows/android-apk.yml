@@ -40,13 +40,19 @@ jobs:
           SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-$HOME/Android/Sdk}}"
           NDK_VERSION="28.2.13676358"
           NDK_DIR="$SDK_ROOT/ndk/$NDK_VERSION"
+          SDKMANAGER="$(command -v sdkmanager || find "$SDK_ROOT/cmdline-tools" -type f -name sdkmanager -print -quit)"
+          if [ -z "$SDKMANAGER" ] || [ ! -x "$SDKMANAGER" ]; then
+            echo "Android SDK manager was not found under $SDK_ROOT/cmdline-tools." >&2
+            exit 1
+          fi
+          echo "Using sdkmanager at $SDKMANAGER"
           if [ -x "$NDK_DIR/toolchains/llvm/prebuilt/linux-x86_64/bin/clang" ]; then
             exit 0
           fi
-          yes | sdkmanager --licenses >/dev/null || true
+          yes | "$SDKMANAGER" --licenses >/dev/null 2>&1 || true
           for attempt in 1 2 3; do
             rm -rf "$NDK_DIR" "$SDK_ROOT/temp" "$HOME/.android/cache"
-            if sdkmanager --install "ndk;$NDK_VERSION" && [ -x "$NDK_DIR/toolchains/llvm/prebuilt/linux-x86_64/bin/clang" ]; then
+            if "$SDKMANAGER" --install "ndk;$NDK_VERSION" && [ -x "$NDK_DIR/toolchains/llvm/prebuilt/linux-x86_64/bin/clang" ]; then
               exit 0
             fi
             echo "NDK install attempt $attempt failed; retrying after clearing the partial download."
