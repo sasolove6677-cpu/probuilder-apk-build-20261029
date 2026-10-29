@@ -67,10 +67,10 @@ jobs:
       - name: Create test-only debug signing key
         run: |
           mkdir -p "$HOME/.android" android/app/src/main/assets
-          rm -f "$HOME/.android/debug.keystore"
+          rm -f "$HOME/.android/probuilder-debug.p12"
           keytool -genkeypair -noprompt \
-            -keystore "$HOME/.android/debug.keystore" \
-            -storetype JKS \
+            -keystore "$HOME/.android/probuilder-debug.p12" \
+            -storetype PKCS12 \
             -storepass android \
             -keypass android \
             -alias androiddebugkey \
@@ -78,7 +78,7 @@ jobs:
             -keysize 2048 \
             -validity 10000 \
             -dname "CN=Android Debug,O=Android,C=US"
-          cp "$HOME/.android/debug.keystore" android/app/src/main/assets/probuilder-debug.keystore
+          cp "$HOME/.android/probuilder-debug.p12" android/app/src/main/assets/probuilder-debug.p12
 
       - name: Build and embed the WebView template APK
         run: |
@@ -86,7 +86,7 @@ jobs:
           cp template_webview_source/app/build/outputs/apk/debug/app-debug.apk \
             android/app/src/main/assets/template.apk
           test -s android/app/src/main/assets/template.apk
-          test -s android/app/src/main/assets/probuilder-debug.keystore
+          test -s android/app/src/main/assets/probuilder-debug.p12
           unzip -l android/app/src/main/assets/template.apk > "$RUNNER_TEMP/template-contents.txt"
           grep -q 'assets/index.html' "$RUNNER_TEMP/template-contents.txt"
 
@@ -101,7 +101,7 @@ jobs:
           APK=build/app/outputs/flutter-apk/app-debug.apk
           unzip -l "$APK" > "$RUNNER_TEMP/probuilder-contents.txt"
           grep -q 'assets/template.apk' "$RUNNER_TEMP/probuilder-contents.txt"
-          grep -q 'assets/probuilder-debug.keystore' "$RUNNER_TEMP/probuilder-contents.txt"
+          grep -q 'assets/probuilder-debug.p12' "$RUNNER_TEMP/probuilder-contents.txt"
 
       - name: Run on-device HTML-to-APK smoke test
         uses: reactivecircus/android-emulator-runner@v2
