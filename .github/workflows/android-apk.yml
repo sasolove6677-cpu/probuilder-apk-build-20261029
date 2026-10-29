@@ -64,21 +64,30 @@ jobs:
       - name: Generate launcher icons
         run: dart run flutter_launcher_icons
 
-      - name: Create test-only debug signing key
+      - name: Create Android-compatible test signing key and certificate
         run: |
-          mkdir -p "$HOME/.android" android/app/src/main/assets
-          rm -f "$HOME/.android/probuilder-debug.p12"
-          keytool -genkeypair -noprompt \
-            -keystore "$HOME/.android/probuilder-debug.p12" \
-            -storetype PKCS12 \
-            -storepass android \
-            -keypass android \
-            -alias androiddebugkey \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -dname "CN=Android Debug,O=Android,C=US"
-          cp "$HOME/.android/probuilder-debug.p12" android/app/src/main/assets/probuilder-debug.p12
+          mkdir -p "$RUNNER_TEMP/probuilder-signing" android/app/src/main/assets
+          openssl req -x509 -newkey rsa:2048 -nodes \
+            -keyout "$RUNNER_TEMP/probuilder-signing/private.pem" \
+            -out "$RUNNER_TEMP/probuilder-signing/certificate.pem" \
+            -days 3650 \
+            -subj "/CN=Android Debug/O=Android/C=US"
+          openssl pkcs8 -topk8 -nocrypt \
+            -in "$RUNNER_TEMP/probuilder-signing/private.pem" \
+            -outform DER \
+            -out android/app/src/main/assets/probuilder-debug.pk8
+          openssl x509 \
+            -in "$RUNNER_TEMP/probuilder-signing/certificate.pem" \
+            -outform DER \
+            -out android/app/src/main/assets/probuilder-debug-cert.der
+          chmod 600 android/app/src/main/assets/probuilder-debug.pk8
+          openssl pkey -inform DER -in android/app/src/main/assets/probuilder-debug.pk8 -pubout -outform DER \
+            > "$RUNNER_TEMP/probuilder-signing/key-public.der"
+          openssl x509 -inform DER -in android/app/src/main/assets/probuilder-debug-cert.der -pubkey -noout \
+            | openssl pkey -pubin -outform DER > "$RUNNER_TEMP/probuilder-signing/cert-public.der"
+          cmp "$RUNNER_TEMP/probuilder-signing/key-public.der" "$RUNNER_TEMP/probuilder-signing/cert-public.der"
+          test -s android/app/src/main/assets/probuilder-debug.pk8
+          test -s android/app/src/main/assets/probuilder-debug-cert.der
 
       - name: Build and embed the WebView template APK
         run: |
@@ -86,7 +95,8 @@ jobs:
           cp template_webview_source/app/build/outputs/apk/debug/app-debug.apk \
             android/app/src/main/assets/template.apk
           test -s android/app/src/main/assets/template.apk
-          test -s android/app/src/main/assets/probuilder-debug.p12
+          test -s android/app/src/main/assets/probuilder-debug.pk8
+          test -s android/app/src/main/assets/probuilder-debug-cert.der
           unzip -l android/app/src/main/assets/template.apk > "$RUNNER_TEMP/template-contents.txt"
           grep -q 'assets/index.html' "$RUNNER_TEMP/template-contents.txt"
 
@@ -101,7 +111,8 @@ jobs:
           APK=build/app/outputs/flutter-apk/app-debug.apk
           unzip -l "$APK" > "$RUNNER_TEMP/probuilder-contents.txt"
           grep -q 'assets/template.apk' "$RUNNER_TEMP/probuilder-contents.txt"
-          grep -q 'assets/probuilder-debug.p12' "$RUNNER_TEMP/probuilder-contents.txt"
+          grep -q 'assets/probuilder-debug.pk8' "$RUNNER_TEMP/probuilder-contents.txt"
+          grep -q 'assets/probuilder-debug-cert.der' "$RUNNER_TEMP/probuilder-contents.txt"
 
       - name: Run on-device HTML-to-APK smoke test
         uses: reactivecircus/android-emulator-runner@v2
