@@ -1,58 +1,50 @@
 # Pro Builder
 
-Starter project for the Pro Builder Flutter interface: dark glassmorphism dashboard, Arabic/English localization, project customization form, icon preview, Android MethodChannel boundary, and an Android WebView source template.
+Pro Builder is a Flutter app with an Arabic/English interface and an Android-native HTML-to-APK builder. The user selects one `.html` or `.htm` file; the app injects it into the bundled WebView template, signs the modified APK with apksig, and saves it in `Downloads/ProBuilder`.
 
-## Important build-engine limitation
+## Cloud build pipeline
 
-The app's Kotlin `ApkBuilderEngine` validates the request and returns `HOST_BUILDER_REQUIRED`; it does **not** pretend to have created an APK. An Android APK cannot reliably be compiled inside an ordinary Android app because the Android SDK and Gradle build toolchain are not present there. The included template can instead be packaged from a computer with a JDK, Gradle, and Android SDK. The provided shell script creates a **debug-signed test APK**, not a production release. ZIP and PDF selection is shown in the UI, but the source template currently packages HTML/HTM only.
+The GitHub Actions workflow builds `template_webview_source` into a real debug-signed `template.apk`, creates a test-only JKS debug key, and places both at `android/app/src/main/assets/` before building Pro Builder. It runs a JVM smoke test that replaces `assets/index.html` and verifies the resulting APK signature, then publishes the installable Pro Builder APK as a GitHub Release asset.
 
-The `apksig` and BouncyCastle Gradle dependencies are included as requested for a future signing implementation. The current app does not embed or distribute a private release key.
+A locally downloaded source tree does not include the generated APK template or key. Run the Actions workflow to generate them; the workflow creates these files during CI and keeps the binary template and key out of source control.
 
-## Requirements
+## Using the on-device builder
 
-- Flutter SDK 3.27 or newer (Dart 3.6+ recommended)
-- Android Studio with Android SDK and platform tools
-- JDK 17
-- For template APK generation: Gradle 8.7 available on `PATH`
+1. Install Pro Builder on an Android phone.
+2. Choose one readable `.html` or `.htm` file (maximum 100 MB).
+3. Tap **Build APK on this phone**. The modified template is signed locally and saved in `Downloads/ProBuilder`.
 
-## Run the Flutter app
+Android 10 and newer use the Downloads MediaStore collection and return a `content://` URI to Flutter. Android 6–9 request storage permission and return the saved file path.
 
-From the project root, run these commands:
+The template packages only the selected HTML file. Keep CSS, JavaScript, and images inline or reference them using reachable HTTPS URLs; separate local files are not bundled. Generated wrappers use the fixed application ID `com.example.probuildertemplate` and the fixed launcher label `Pro Builder Web`, so installing another generated wrapper replaces the previous one rather than installing side by side.
+
+## Debug signing notice
+
+The bundled JKS is a public, test-only Android debug key with the standard debug password. It is intentionally included so the app can sign generated test APKs on-device. Anyone with the Pro Builder APK can extract it. Do not use this key for production, commercial releases, trusted updates, or any app whose signing identity must remain private. Use a protected release key and a controlled signing service for production distribution.
+
+## Requirements and commands
+
+The hosted workflow uses Java 17, Gradle 8.13, Flutter 3.47.8, and Android SDK tools. To run the Flutter app locally after running the template-generation steps in the workflow:
 
 ```bash
-flutter doctor
-flutter doctor --android-licenses
 flutter pub get
 dart run flutter_launcher_icons
 flutter run
 ```
 
-To build the Flutter Android app for installation:
+Build the Pro Builder app locally after both generated assets exist:
 
 ```bash
 flutter build apk --debug
 ```
 
-## Build a sample WebView APK from HTML
-
-On Linux/macOS, from the project root:
-
-```bash
-chmod +x tools/build_template_apk.sh
-./tools/build_template_apk.sh /absolute/path/to/page.html "My Web App" com.example.mywebapp /absolute/path/to/icon.png
-```
-
-The icon argument is optional; if omitted, the attached project icon is used. The generated file is saved under `~/Downloads/ProBuilder/`. The script accepts only `.html`/`.htm`, embeds the page as `assets/index.html`, patches the package name and displayed app name, and uses Gradle's debug signing. For distribution, configure your own release signing credentials securely; never put a production keystore password or private key in source control or ship it inside the app.
+The standalone `tools/build_template_apk.sh` remains available for host-side packaging when a JDK, Gradle, and Android SDK are installed. It is not required for builds initiated inside the installed Pro Builder app.
 
 ## Project map
 
-- `lib/main.dart`: app shell, locale state binding, and floating bottom navigation.
-- `lib/screens/dashboard_screen.dart`: dashboard/projects Bento-style UI and sample projects.
-- `lib/screens/customization_screen.dart`: input selection, app metadata, icon preview, and native call.
-- `lib/screens/settings_screen.dart`: live AR/EN toggle, output directory display, version, branding.
-- `lib/widgets/glass_card.dart`: reusable blurred glass card.
-- `lib/l10n/`: in-app localization and ARB translation resources.
-- `android/app/src/main/kotlin/com/waelatef/probuilder/`: Android MethodChannel and explicit build-engine boundary.
-- `template_webview_source/`: standalone Android WebView template source (no `template.apk` binary required).
-- `tools/build_template_apk.sh`: workstation-side debug APK generator from HTML.
-- `assets/launcher_icon.png`: the provided launcher artwork.
+- `lib/main.dart`: app startup, locale binding, and DashboardScreen entry point.
+- `lib/screens/customization_screen.dart`: HTML-only picker and native build request.
+- `lib/services/build_service.dart`: Flutter MethodChannel response handling.
+- `android/app/src/main/kotlin/com/waelatef/probuilder/`: template injection, apksig signing, Downloads output, and permission handling.
+- `template_webview_source/`: source for the embedded Android WebView wrapper.
+- `.github/workflows/android-apk.yml`: CI template build, signing smoke test, and release publishing.

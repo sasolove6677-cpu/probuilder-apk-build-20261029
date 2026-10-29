@@ -9,3 +9,5 @@ build/
 android/local.properties
 android/.gradle/
 *.iml
+/android/app/src/main/assets/template.apk
+/android/app/src/main/assets/probuilder-debug.keystore

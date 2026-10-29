@@ -14,7 +14,8 @@ class AppStrings {
       _AppStringsDelegate();
 
   bool get isArabic => locale.languageCode == 'ar';
-  TextDirection get textDirection => isArabic ? TextDirection.rtl : TextDirection.ltr;
+  TextDirection get textDirection =>
+      isArabic ? TextDirection.rtl : TextDirection.ltr;
 
   String _value(String key) => _strings[isArabic ? 'ar' : 'en']![key] ?? key;
   String get appTitle => _value('appTitle');
@@ -37,6 +38,8 @@ class AppStrings {
   String get chooseFileFirst => _value('chooseFileFirst');
   String get building => _value('building');
   String get buildUnavailable => _value('buildUnavailable');
+  String get buildFailed => _value('buildFailed');
+  String get apkBuildSuccess => _value('apkBuildSuccess');
   String get chooseHtml => _value('chooseHtml');
   String get language => _value('language');
   String get english => _value('english');
@@ -67,48 +70,50 @@ class AppStrings {
       'appTitle': 'Pro Builder', 'dashboard': 'Home', 'projects': 'Projects',
       'settings': 'Settings', 'newProject': 'New Project', 'recentProjects': 'Recent projects',
       'seeAll': 'See all', 'noProjects': 'No projects yet',
-      'customizationStudio': 'Customization Studio', 'selectFile': 'Choose a file',
-      'supportedFiles': 'HTML, ZIP or PDF • up to 100 MB', 'appDetails': 'App details',
+      'customizationStudio': 'HTML App Builder', 'selectFile': 'Choose an HTML file',
+      'supportedFiles': 'HTML or HTM • up to 100 MB', 'appDetails': 'App details',
       'appName': 'App name', 'packageName': 'Package name', 'uploadIcon': 'App icon',
-      'preview': 'Live preview', 'startBuilding': 'Start Building',
-      'chooseFileFirst': 'Choose a file first.', 'building': 'Preparing build request…',
-      'buildUnavailable': 'APK creation needs a desktop/hosted Android build service. The included template source can be built from a computer; this mobile app does not contain the Android SDK.',
-      'chooseHtml': 'The template build currently supports HTML files only. ZIP and PDF can be selected, but are not packaged by this source template.',
+      'preview': 'Live preview', 'startBuilding': 'Build APK on this phone',
+      'chooseFileFirst': 'Choose an HTML file first.', 'building': 'Creating and signing the APK on this phone…',
+      'buildUnavailable': 'The APK could not be created. Check the selected HTML file and available storage, then try again.',
+      'buildFailed': 'Build failed', 'apkBuildSuccess': 'The APK was created and saved to Downloads/ProBuilder.',
+      'chooseHtml': 'Select a readable .html or .htm file.',
       'language': 'Language', 'english': 'English', 'arabic': 'العربية',
       'outputDirectory': '/Downloads/ProBuilder', 'version': 'Version',
-      'branding': 'Designed by', 'designer': 'Designer', 'projectReady': 'Ready',
+      'branding': 'Designed by', 'designer': 'Designer', 'projectReady': 'APK created',
       'projectStatusReady': 'Ready', 'projectStatusBuilding': 'Building',
       'projectStatusDraft': 'Draft', 'cancel': 'Cancel', 'ok': 'OK',
       'projectCount': '3 sample projects', 'dashboardSubtitle': 'Your next app starts here.',
       'chooseIcon': 'Choose icon', 'noIcon': 'No icon selected',
-      'htmlOnlyForBuild': 'Select an HTML file to create a template APK.',
+      'htmlOnlyForBuild': 'Choose an HTML file to create a WebView APK.',
       'outputDirectoryLabel': 'Default output directory',
-      'fileTooLarge': 'Maximum file size is 100 MB.',
-      'invalidAppDetails': 'Enter an app name and a valid package name, e.g. com.example.app.',
+      'fileTooLarge': 'Maximum HTML size is 100 MB.',
+      'invalidAppDetails': 'App metadata is fixed in this HTML wrapper.',
       'buildTagline': 'BUILD • DEPLOY • REPEAT', 'builtLabel': 'Built',
     },
     'ar': {
       'appTitle': 'Pro Builder', 'dashboard': 'الرئيسية', 'projects': 'المشاريع',
       'settings': 'الإعدادات', 'newProject': 'مشروع جديد', 'recentProjects': 'المشاريع الأخيرة',
       'seeAll': 'عرض الكل', 'noProjects': 'لا توجد مشاريع بعد',
-      'customizationStudio': 'استوديو التخصيص', 'selectFile': 'اختر ملفًا',
-      'supportedFiles': 'HTML أو ZIP أو PDF • حتى 100 ميغابايت', 'appDetails': 'تفاصيل التطبيق',
+      'customizationStudio': 'منشئ تطبيقات HTML', 'selectFile': 'اختر ملف HTML',
+      'supportedFiles': 'HTML أو HTM • حتى ١٠٠ ميغابايت', 'appDetails': 'تفاصيل التطبيق',
       'appName': 'اسم التطبيق', 'packageName': 'معرّف الحزمة', 'uploadIcon': 'أيقونة التطبيق',
-      'preview': 'معاينة مباشرة', 'startBuilding': 'بدء الإنشاء',
-      'chooseFileFirst': 'اختر ملفًا أولًا.', 'building': 'جارٍ تجهيز طلب الإنشاء…',
-      'buildUnavailable': 'إنشاء APK يحتاج إلى خدمة بناء Android على حاسوب أو خادم. يتضمن المشروع قالب المصدر لبنائه من الحاسوب؛ تطبيق الهاتف لا يحتوي على Android SDK.',
-      'chooseHtml': 'قالب البناء يدعم حاليًا ملفات HTML فقط. يمكن اختيار ZIP وPDF، لكن لا يتم تضمينهما في APK بهذا القالب.',
+      'preview': 'معاينة مباشرة', 'startBuilding': 'إنشاء APK على الهاتف',
+      'chooseFileFirst': 'اختر ملف HTML أولًا.', 'building': 'جارٍ إنشاء ملف APK وتوقيعه على الهاتف…',
+      'buildUnavailable': 'تعذر إنشاء APK. تحقق من ملف HTML المحدد والمساحة المتاحة ثم حاول مجددًا.',
+      'buildFailed': 'فشل الإنشاء', 'apkBuildSuccess': 'تم إنشاء APK وحفظه في Downloads/ProBuilder.',
+      'chooseHtml': 'اختر ملف .html أو .htm يمكن قراءته.',
       'language': 'اللغة', 'english': 'English', 'arabic': 'العربية',
       'outputDirectory': '/Downloads/ProBuilder', 'version': 'الإصدار',
-      'branding': 'تصميم', 'designer': 'المصمم', 'projectReady': 'جاهز',
+      'branding': 'تصميم', 'designer': 'المصمم', 'projectReady': 'تم إنشاء APK',
       'projectStatusReady': 'جاهز', 'projectStatusBuilding': 'قيد الإنشاء',
       'projectStatusDraft': 'مسودة', 'cancel': 'إلغاء', 'ok': 'حسنًا',
       'projectCount': '٣ مشاريع تجريبية', 'dashboardSubtitle': 'تطبيقك القادم يبدأ من هنا.',
       'chooseIcon': 'اختر أيقونة', 'noIcon': 'لم يتم اختيار أيقونة',
-      'htmlOnlyForBuild': 'اختر ملف HTML لإنشاء APK من القالب.',
+      'htmlOnlyForBuild': 'اختر ملف HTML لإنشاء تطبيق WebView.',
       'outputDirectoryLabel': 'مجلد الإخراج الافتراضي',
-      'fileTooLarge': 'الحد الأقصى لحجم الملف ١٠٠ ميغابايت.',
-      'invalidAppDetails': 'أدخل اسم التطبيق ومعرّف حزمة صحيحًا، مثل com.example.app.',
+      'fileTooLarge': 'الحد الأقصى لحجم HTML هو ١٠٠ ميغابايت.',
+      'invalidAppDetails': 'بيانات التطبيق ثابتة في قالب HTML هذا.',
       'buildTagline': 'أنشئ • أطلق • كرر', 'builtLabel': 'تم إنشاؤه',
     },
   };
@@ -116,12 +121,15 @@ class AppStrings {
 
 class _AppStringsDelegate extends LocalizationsDelegate<AppStrings> {
   const _AppStringsDelegate();
+
   @override
   bool isSupported(Locale locale) => AppStrings.supportedLocales
       .any((supported) => supported.languageCode == locale.languageCode);
+
   @override
   Future<AppStrings> load(Locale locale) =>
       SynchronousFuture<AppStrings>(AppStrings(locale));
+
   @override
   bool shouldReload(_AppStringsDelegate old) => false;
 }

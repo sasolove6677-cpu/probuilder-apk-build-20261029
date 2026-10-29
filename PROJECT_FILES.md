@@ -1,6 +1,6 @@
 # Project files
 
-Individual source and configuration files for Pro Builder. No ZIP archive is used.
+This index links to the source and configuration files. CI generates the nested template APK and test signing key during the build; those binaries are not committed.
 
 ## Flutter source
 
@@ -27,9 +27,13 @@ Individual source and configuration files for Pro Builder. No ZIP archive is use
 - [android/app/build.gradle](android/app/build.gradle)
 - [android/app/src/main/AndroidManifest.xml](android/app/src/main/AndroidManifest.xml)
 - [android/app/src/main/kotlin/com/waelatef/probuilder/ApkBuilderEngine.kt](android/app/src/main/kotlin/com/waelatef/probuilder/ApkBuilderEngine.kt)
+- [android/app/src/main/kotlin/com/waelatef/probuilder/ApkTemplateAssembler.kt](android/app/src/main/kotlin/com/waelatef/probuilder/ApkTemplateAssembler.kt)
+- [android/app/src/main/kotlin/com/waelatef/probuilder/ApkTemplateSigning.kt](android/app/src/main/kotlin/com/waelatef/probuilder/ApkTemplateSigning.kt)
 - [android/app/src/main/kotlin/com/waelatef/probuilder/MainActivity.kt](android/app/src/main/kotlin/com/waelatef/probuilder/MainActivity.kt)
 - [android/app/src/main/res/values/strings.xml](android/app/src/main/res/values/strings.xml)
 - [android/app/src/main/res/values/styles.xml](android/app/src/main/res/values/styles.xml)
+- [android/app/src/test/kotlin/com/waelatef/probuilder/ApkTemplateBuildTest.kt](android/app/src/test/kotlin/com/waelatef/probuilder/ApkTemplateBuildTest.kt)
+- [android/app/src/androidTest/kotlin/com/waelatef/probuilder/ApkBuilderEngineInstrumentedTest.kt](android/app/src/androidTest/kotlin/com/waelatef/probuilder/ApkBuilderEngineInstrumentedTest.kt)
 - [android/build.gradle](android/build.gradle)
 - [android/gradle/wrapper/gradle-wrapper.jar](android/gradle/wrapper/gradle-wrapper.jar)
 - [android/gradle/wrapper/gradle-wrapper.properties](android/gradle/wrapper/gradle-wrapper.properties)

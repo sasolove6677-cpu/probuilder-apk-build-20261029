@@ -16,7 +16,7 @@ ICON="${4:-$ROOT/assets/launcher_icon.png}"
 [[ -f "$ICON" ]] || { echo "Icon file not found: $ICON" >&2; exit 2; }
 [[ -n "${APP_NAME//[[:space:]]/}" ]] || { echo "App name cannot be empty." >&2; exit 2; }
 [[ "$PACKAGE_NAME" =~ ^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$ ]] || { echo "Invalid package name: $PACKAGE_NAME" >&2; exit 2; }
-command -v gradle >/dev/null || { echo "Gradle is required on PATH (Gradle 8.7 recommended)." >&2; exit 2; }
+command -v gradle >/dev/null || { echo "Gradle is required on PATH (Gradle 8.13 or compatible)." >&2; exit 2; }
 
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
