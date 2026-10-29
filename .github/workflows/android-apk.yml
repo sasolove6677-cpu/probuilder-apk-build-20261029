@@ -21,20 +21,90 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      - name: Set up Gradle for the standalone template
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.47.8'
           cache: true
 
-      - name: Install dependencies
+      - name: Install Flutter dependencies
         run: flutter pub get
+
+      - name: Install required Android NDK
+        run: |
+          SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-$HOME/Android/Sdk}}"
+          NDK_VERSION="28.2.13676358"
+          NDK_DIR="$SDK_ROOT/ndk/$NDK_VERSION"
+          if [ -x "$NDK_DIR/toolchains/llvm/prebuilt/linux-x86_64/bin/clang" ]; then
+            exit 0
+          fi
+          yes | sdkmanager --licenses >/dev/null || true
+          for attempt in 1 2 3; do
+            rm -rf "$NDK_DIR" "$SDK_ROOT/temp" "$HOME/.android/cache"
+            if sdkmanager --install "ndk;$NDK_VERSION" && [ -x "$NDK_DIR/toolchains/llvm/prebuilt/linux-x86_64/bin/clang" ]; then
+              exit 0
+            fi
+            echo "NDK install attempt $attempt failed; retrying after clearing the partial download."
+            sleep $((attempt * 5))
+          done
+          echo "NDK $NDK_VERSION could not be installed after 3 attempts." >&2
+          exit 1
 
       - name: Generate launcher icons
         run: dart run flutter_launcher_icons
 
-      - name: Build installable debug APK
+      - name: Create test-only debug signing key
+        run: |
+          mkdir -p "$HOME/.android" android/app/src/main/assets
+          rm -f "$HOME/.android/debug.keystore"
+          keytool -genkeypair -noprompt \
+            -keystore "$HOME/.android/debug.keystore" \
+            -storetype JKS \
+            -storepass android \
+            -keypass android \
+            -alias androiddebugkey \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US"
+          cp "$HOME/.android/debug.keystore" android/app/src/main/assets/probuilder-debug.keystore
+
+      - name: Build and embed the WebView template APK
+        run: |
+          gradle --no-daemon --project-dir template_webview_source assembleDebug
+          cp template_webview_source/app/build/outputs/apk/debug/app-debug.apk \
+            android/app/src/main/assets/template.apk
+          test -s android/app/src/main/assets/template.apk
+          test -s android/app/src/main/assets/probuilder-debug.keystore
+          unzip -l android/app/src/main/assets/template.apk > "$RUNNER_TEMP/template-contents.txt"
+          grep -q 'assets/index.html' "$RUNNER_TEMP/template-contents.txt"
+
+      - name: Test HTML injection and apksig signing
+        run: cd android && ./gradlew --no-daemon :app:testDebugUnitTest
+
+      - name: Build installable Pro Builder APK
         run: flutter build apk --debug
+
+      - name: Verify embedded builder assets
+        run: |
+          APK=build/app/outputs/flutter-apk/app-debug.apk
+          unzip -l "$APK" > "$RUNNER_TEMP/probuilder-contents.txt"
+          grep -q 'assets/template.apk' "$RUNNER_TEMP/probuilder-contents.txt"
+          grep -q 'assets/probuilder-debug.keystore' "$RUNNER_TEMP/probuilder-contents.txt"
+
+      - name: Run on-device HTML-to-APK smoke test
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          profile: pixel_2
+          emulator-options: -no-window -gpu swiftshader_indirect -no-audio -no-boot-anim -no-snapshot
+          script: cd android && ./gradlew --no-daemon :app:connectedDebugAndroidTest
 
       - name: Publish APK as a public GitHub Release asset
         env:
@@ -43,5 +113,5 @@ jobs:
           TAG="apk-build-${GITHUB_RUN_NUMBER}"
           gh release create "$TAG" \
             build/app/outputs/flutter-apk/app-debug.apk \
-            --title "Pro Builder installable APK" \
-            --notes "Debug-signed APK for installation and testing. The in-app APK conversion engine remains a host-builder placeholder; see the project README."
+            --title "Pro Builder HTML-to-APK builder" \
+            --notes "Debug-signed Pro Builder app. Select one HTML/HTM file to create a signed WebView APK on the phone. Generated wrappers use a bundled test-only debug key and the fixed template package ID; do not use this key for production distribution."
