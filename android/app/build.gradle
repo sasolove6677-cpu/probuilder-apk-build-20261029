@@ -25,6 +25,12 @@ android {
         versionCode flutter.versionCode
         versionName flutter.versionName
     }
+
+    packaging {
+        resources {
+            excludes += ['META-INF/versions/9/OSGI-INF/MANIFEST.MF']
+        }
+    }
 }
 
 flutter {
