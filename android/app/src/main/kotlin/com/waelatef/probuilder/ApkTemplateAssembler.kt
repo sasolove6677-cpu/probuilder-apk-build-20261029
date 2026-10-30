@@ -50,8 +50,8 @@ internal object ApkTemplateAssembler {
                             }
                             input.closeEntry()
                         }
-                        sourceEntry.name == ICON_ENTRY && iconFile != null -> {
-                            writeIcon(output, iconFile)
+                        isIconEntry(sourceEntry.name) && iconFile != null -> {
+                            writeIcon(output, iconFile, sourceEntry.name)
                             input.closeEntry()
                         }
                         else -> {
@@ -123,8 +123,11 @@ internal object ApkTemplateAssembler {
         output.closeEntry()
     }
 
-    private fun writeIcon(output: ZipOutputStream, iconFile: File) {
-        val target = ZipEntry(ICON_ENTRY).apply {
+    private fun isIconEntry(name: String): Boolean =
+        name == ICON_ENTRY || name == "res/drawable-nodpi-v4/launcher.png"
+
+    private fun writeIcon(output: ZipOutputStream, iconFile: File, entryName: String) {
+        val target = ZipEntry(entryName).apply {
             method = ZipEntry.DEFLATED
             time = System.currentTimeMillis()
         }
