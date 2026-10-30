@@ -28,7 +28,12 @@ class MainActivity : FlutterActivity() {
                     result.error("INVALID_ARGUMENTS", "Build arguments are missing.", null)
                     return@setMethodCallHandler
                 }
-                val pending = PendingBuild(args["htmlPath"] as? String, result)
+                val pending = PendingBuild(
+                    htmlPath = args["htmlPath"] as? String,
+                    outputName = args["outputName"] as? String,
+                    iconPath = args["iconPath"] as? String,
+                    result = result,
+                )
                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q &&
                     checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
                 ) {
@@ -78,7 +83,11 @@ class MainActivity : FlutterActivity() {
         }
         buildInProgress = true
         buildExecutor.execute {
-            val resultMap = ApkBuilderEngine(applicationContext).build(pending.htmlPath)
+            val resultMap = ApkBuilderEngine(applicationContext).build(
+                pending.htmlPath,
+                pending.outputName,
+                pending.iconPath,
+            )
             runOnUiThread {
                 buildInProgress = false
                 pending.result.success(resultMap)
@@ -88,6 +97,8 @@ class MainActivity : FlutterActivity() {
 
     private data class PendingBuild(
         val htmlPath: String?,
+        val outputName: String?,
+        val iconPath: String?,
         val result: MethodChannel.Result,
     )
 

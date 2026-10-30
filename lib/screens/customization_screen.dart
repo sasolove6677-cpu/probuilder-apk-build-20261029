@@ -17,7 +17,21 @@ class CustomizationScreen extends StatefulWidget {
 
 class _CustomizationScreenState extends State<CustomizationScreen> {
   PlatformFile? _selectedHtml;
+  PlatformFile? _selectedIcon;
+  late final TextEditingController _outputNameController;
   bool _isBuilding = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _outputNameController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _outputNameController.dispose();
+    super.dispose();
+  }
 
   Future<void> _pickHtml() async {
     final result = await FilePicker.platform.pickFiles(
@@ -36,7 +50,26 @@ class _CustomizationScreenState extends State<CustomizationScreen> {
       _message(AppStrings.of(context).chooseHtml);
       return;
     }
-    setState(() => _selectedHtml = file);
+    setState(() {
+      _selectedHtml = file;
+      if (_outputNameController.text.trim().isEmpty) {
+        _outputNameController.text = file.name.replaceFirst(RegExp(r'\.[^.]+$'), '');
+      }
+    });
+  }
+
+  Future<void> _pickIcon() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      withData: false,
+    );
+    if (!mounted || result == null || result.files.isEmpty) return;
+    final file = result.files.single;
+    if (file.path == null) {
+      _message(AppStrings.of(context).chooseIcon);
+      return;
+    }
+    setState(() => _selectedIcon = file);
   }
 
   Future<void> _startBuilding() async {
@@ -49,6 +82,11 @@ class _CustomizationScreenState extends State<CustomizationScreen> {
     final extension = file!.extension?.toLowerCase();
     if (extension != 'html' && extension != 'htm') {
       _message(strings.chooseHtml);
+      return;
+    }
+    final outputName = _outputNameController.text.trim();
+    if (outputName.isEmpty) {
+      _message(strings.enterOutputName);
       return;
     }
 
@@ -82,7 +120,11 @@ class _CustomizationScreenState extends State<CustomizationScreen> {
 
     BuildResult result;
     try {
-      result = await BuildService().buildApk(htmlPath: file.path!);
+      result = await BuildService().buildApk(
+        htmlPath: file.path!,
+        outputName: outputName,
+        iconPath: _selectedIcon?.path,
+      );
     } on PlatformException catch (error) {
       result = BuildResult(
         success: false,
@@ -198,6 +240,38 @@ class _CustomizationScreenState extends State<CustomizationScreen> {
                   ),
                 ),
                 const Icon(Icons.chevron_right_rounded, color: AppColors.muted),
+              ],
+            ),
+          ),
+          SizedBox(height: 22.h),
+          TextField(
+            controller: _outputNameController,
+            enabled: !_isBuilding,
+            textInputAction: TextInputAction.done,
+            decoration: InputDecoration(
+              labelText: strings.outputFileName,
+              hintText: strings.outputFileNameHint,
+              prefixIcon: const Icon(Icons.drive_file_rename_outline_rounded),
+            ),
+          ),
+          SizedBox(height: 14.h),
+          GlassCard(
+            onTap: _isBuilding ? null : _pickIcon,
+            padding: EdgeInsets.all(16.w),
+            glowColor: AppColors.cyberGreen,
+            child: Row(
+              children: [
+                const Icon(Icons.image_outlined, color: AppColors.cyberGreen),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Text(
+                    _selectedIcon?.name ?? strings.chooseIcon,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: appTextStyle(context),
+                  ),
+                ),
+                const Icon(Icons.upload_rounded, color: AppColors.muted),
               ],
             ),
           ),

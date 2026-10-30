@@ -15,10 +15,11 @@ import java.util.zip.ZipOutputStream
 /** Repackages a template APK while replacing only its bundled HTML entry. */
 internal object ApkTemplateAssembler {
     private const val HTML_ENTRY = "assets/index.html"
+    private const val ICON_ENTRY = "res/drawable-nodpi/launcher.png"
     private const val STORED_ENTRY_ALIGNMENT = 4L
     private const val ZIPALIGN_EXTRA_FIELD_ID = 0xD935
 
-    fun injectHtml(templateApk: File, htmlFile: File, unsignedApk: File) {
+    fun injectHtml(templateApk: File, htmlFile: File, unsignedApk: File, iconFile: File? = null) {
         if (!templateApk.isFile || !templateApk.canRead()) {
             throw IOException("The APK template is missing or unreadable.")
         }
@@ -47,6 +48,10 @@ internal object ApkTemplateAssembler {
                                 writeHtml(output, htmlFile)
                                 insertedHtml = true
                             }
+                            input.closeEntry()
+                        }
+                        sourceEntry.name == ICON_ENTRY && iconFile != null -> {
+                            writeIcon(output, iconFile)
                             input.closeEntry()
                         }
                         else -> {
@@ -115,6 +120,16 @@ internal object ApkTemplateAssembler {
         }
         output.putNextEntry(target)
         FileInputStream(htmlFile).buffered().use { it.copyTo(output, DEFAULT_BUFFER_SIZE) }
+        output.closeEntry()
+    }
+
+    private fun writeIcon(output: ZipOutputStream, iconFile: File) {
+        val target = ZipEntry(ICON_ENTRY).apply {
+            method = ZipEntry.DEFLATED
+            time = System.currentTimeMillis()
+        }
+        output.putNextEntry(target)
+        FileInputStream(iconFile).buffered().use { it.copyTo(output, DEFAULT_BUFFER_SIZE) }
         output.closeEntry()
     }
 

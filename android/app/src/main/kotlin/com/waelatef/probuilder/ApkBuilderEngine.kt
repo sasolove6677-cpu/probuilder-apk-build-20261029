@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.ContentValues
 import android.content.Context
 import android.content.pm.PackageManager
+import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
@@ -14,7 +15,7 @@ import java.util.UUID
 
 /** Builds an installable WebView APK on the device from one HTML/HTM file. */
 class ApkBuilderEngine(private val context: Context) {
-    fun build(htmlPath: String?): Map<String, Any?> {
+    fun build(htmlPath: String?, requestedOutputName: String? = null, iconPath: String? = null): Map<String, Any?> {
         val html = htmlPath?.let(::File)
         if (html == null || !html.isFile || !html.canRead()) {
             return failure("INVALID_HTML", "The selected HTML file is missing or unreadable.")
@@ -42,6 +43,8 @@ class ApkBuilderEngine(private val context: Context) {
             val signingCertificate = File(workDir, ApkTemplateSigning.CERTIFICATE_ASSET)
             val unsignedApk = File(workDir, "modified-unsigned.apk")
             val signedApk = File(workDir, "modified-signed.apk")
+            val iconFile = iconPath?.let { File(it) }
+            val normalizedIcon = iconFile?.let { normalizeIcon(it, workDir) }
 
             try {
                 context.assets.open(TEMPLATE_ASSET).use { input ->
@@ -62,9 +65,9 @@ class ApkBuilderEngine(private val context: Context) {
                 return failure("SIGNING_KEY_MISSING", "The APK signing key or certificate is missing from this build.")
             }
 
-            ApkTemplateAssembler.injectHtml(templateApk, html, unsignedApk)
+            ApkTemplateAssembler.injectHtml(templateApk, html, unsignedApk, normalizedIcon)
             ApkTemplateSigning.sign(unsignedApk, signedApk, signingPrivateKey, signingCertificate)
-            val outputName = makeOutputName(html)
+            val outputName = makeOutputName(html, requestedOutputName)
             val savedLocation = saveToDownloads(signedApk, outputName)
 
             return mapOf(
@@ -128,8 +131,31 @@ class ApkBuilderEngine(private val context: Context) {
         return destination.absolutePath
     }
 
-    private fun makeOutputName(html: File): String =
-        "${safeBaseName(html)}_${System.currentTimeMillis()}.apk"
+    private fun makeOutputName(html: File, requested: String?): String {
+        val base = requested?.trim()?.removeSuffix(".apk")?.let(::safeName)
+            ?: "${safeBaseName(html)}_${System.currentTimeMillis()}"
+        return "${base.ifBlank { "web_app" }}.apk"
+    }
+
+    private fun normalizeIcon(source: File, workDir: File): File {
+        if (!source.isFile || !source.canRead()) throw IOException("The selected icon is missing or unreadable.")
+        val bitmap = BitmapFactory.decodeFile(source.absolutePath)
+            ?: throw IOException("The selected icon is not a valid image.")
+        val destination = File(workDir, "launcher.png")
+        FileOutputStream(destination).use { output ->
+            if (!bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, output)) {
+                throw IOException("The selected icon could not be converted to PNG.")
+            }
+        }
+        bitmap.recycle()
+        return destination
+    }
+
+    private fun safeName(value: String): String = value
+        .map { char -> if (char.isLetterOrDigit() || char == '-' || char == '_') char else '_' }
+        .joinToString("")
+        .trim('_')
+        .take(64)
 
     private fun safeBaseName(html: File): String {
         val safe = html.nameWithoutExtension

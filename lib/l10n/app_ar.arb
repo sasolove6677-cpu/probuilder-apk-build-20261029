@@ -45,5 +45,8 @@
   "fileTooLarge": "الحد الأقصى لحجم HTML هو ١٠٠ ميغابايت.",
   "invalidAppDetails": "بيانات التطبيق ثابتة في قالب HTML هذا.",
   "buildTagline": "أنشئ • أطلق • كرر",
-  "builtLabel": "تم إنشاؤه"
+  "builtLabel": "تم إنشاؤه",
+  "outputFileName": "اسم ملف APK",
+  "outputFileNameHint": "تطبيقي",
+  "enterOutputName": "أدخل اسمًا لملف APK."
 }

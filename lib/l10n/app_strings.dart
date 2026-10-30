@@ -64,6 +64,9 @@ class AppStrings {
   String get invalidAppDetails => _value('invalidAppDetails');
   String get buildTagline => _value('buildTagline');
   String get builtLabel => _value('builtLabel');
+  String get outputFileName => _value('outputFileName');
+  String get outputFileNameHint => _value('outputFileNameHint');
+  String get enterOutputName => _value('enterOutputName');
 
   static const Map<String, Map<String, String>> _strings = {
     'en': {
@@ -90,6 +93,8 @@ class AppStrings {
       'fileTooLarge': 'Maximum HTML size is 100 MB.',
       'invalidAppDetails': 'App metadata is fixed in this HTML wrapper.',
       'buildTagline': 'BUILD • DEPLOY • REPEAT', 'builtLabel': 'Built',
+      'outputFileName': 'APK file name', 'outputFileNameHint': 'my_app',
+      'enterOutputName': 'Enter a name for the APK file.',
     },
     'ar': {
       'appTitle': 'Pro Builder', 'dashboard': 'الرئيسية', 'projects': 'المشاريع',
@@ -115,6 +120,8 @@ class AppStrings {
       'fileTooLarge': 'الحد الأقصى لحجم HTML هو ١٠٠ ميغابايت.',
       'invalidAppDetails': 'بيانات التطبيق ثابتة في قالب HTML هذا.',
       'buildTagline': 'أنشئ • أطلق • كرر', 'builtLabel': 'تم إنشاؤه',
+      'outputFileName': 'اسم ملف APK', 'outputFileNameHint': 'تطبيقي',
+      'enterOutputName': 'أدخل اسمًا لملف APK.',
     },
   };
 }

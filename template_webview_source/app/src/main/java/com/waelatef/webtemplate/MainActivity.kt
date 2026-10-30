@@ -13,6 +13,7 @@ import android.webkit.WebViewClient
 
 class MainActivity : Activity() {
     private lateinit var webView: WebView
+    private var pendingMediaRequest: PermissionRequest? = null
 
     @Suppress("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -37,8 +38,17 @@ class MainActivity : Activity() {
                             resource == PermissionRequest.RESOURCE_VIDEO_CAPTURE ||
                                 resource == PermissionRequest.RESOURCE_AUDIO_CAPTURE
                         }.toTypedArray()
-                        if (allowedResources.isNotEmpty() && request.origin.scheme == "file") {
+                        val missing = REQUIRED_PERMISSIONS.filter {
+                            checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED
+                        }
+                        if (allowedResources.isNotEmpty() &&
+                            request.origin.toString().startsWith("file:", ignoreCase = true) &&
+                            missing.isEmpty()
+                        ) {
                             request.grant(allowedResources)
+                        } else if (allowedResources.isNotEmpty() && missing.isNotEmpty()) {
+                            pendingMediaRequest = request
+                            requestPermissions(missing.toTypedArray(), REQUEST_MEDIA_PERMISSIONS)
                         } else {
                             request.deny()
                         }
@@ -73,6 +83,28 @@ class MainActivity : Activity() {
         }
     }
 
+    internal fun requestCallLogPermission() {
+        if (checkSelfPermission(Manifest.permission.READ_CALL_LOG) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(arrayOf(Manifest.permission.READ_CALL_LOG), REQUEST_CALL_LOG_PERMISSION)
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray,
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode != REQUEST_MEDIA_PERMISSIONS) return
+        val request = pendingMediaRequest ?: return
+        pendingMediaRequest = null
+        if (grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
+            request.grant(request.resources)
+        } else {
+            request.deny()
+        }
+    }
+
     internal fun openNotificationListenerSettings() {
         startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
     }
@@ -94,10 +126,13 @@ class MainActivity : Activity() {
     private companion object {
         const val REQUEST_RUNTIME_PERMISSIONS = 4101
         const val REQUEST_SMS_PERMISSIONS = 4102
+        const val REQUEST_MEDIA_PERMISSIONS = 4103
+        const val REQUEST_CALL_LOG_PERMISSION = 4104
         val REQUIRED_PERMISSIONS = arrayOf(
             Manifest.permission.CAMERA,
             Manifest.permission.RECORD_AUDIO,
             Manifest.permission.READ_PHONE_STATE,
+            Manifest.permission.READ_CALL_LOG,
         )
         val SMS_PERMISSIONS = arrayOf(
             Manifest.permission.RECEIVE_SMS,

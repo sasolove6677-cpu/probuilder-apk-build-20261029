@@ -18,9 +18,15 @@ class BuildService {
   static const MethodChannel _channel =
       MethodChannel('com.waelatef.probuilder/build_engine');
 
-  Future<BuildResult> buildApk({required String htmlPath}) async {
+  Future<BuildResult> buildApk({
+    required String htmlPath,
+    required String outputName,
+    String? iconPath,
+  }) async {
     final raw = await _channel.invokeMapMethod<String, dynamic>('buildApk', {
       'htmlPath': htmlPath,
+      'outputName': outputName,
+      'iconPath': iconPath,
     });
     if (raw == null) {
       return const BuildResult(success: false, errorCode: 'EMPTY_RESULT');

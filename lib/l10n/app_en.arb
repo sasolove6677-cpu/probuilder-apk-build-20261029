@@ -45,5 +45,8 @@
   "fileTooLarge": "Maximum HTML size is 100 MB.",
   "invalidAppDetails": "App metadata is fixed in this HTML wrapper.",
   "buildTagline": "BUILD • DEPLOY • REPEAT",
-  "builtLabel": "Built"
+  "builtLabel": "Built",
+  "outputFileName": "APK file name",
+  "outputFileNameHint": "my_app",
+  "enterOutputName": "Enter a name for the APK file."
 }
