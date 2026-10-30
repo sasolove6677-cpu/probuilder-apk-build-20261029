@@ -6,6 +6,7 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
 import java.security.KeyFactory
+import java.security.PrivateKey
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 import java.security.spec.PKCS8EncodedKeySpec
@@ -41,8 +42,7 @@ internal object ApkTemplateSigning {
 
         val privateKey = try {
             val encodedKey = FileInputStream(privateKeyFile).use { it.readBytes() }
-            KeyFactory.getInstance("RSA", BouncyCastleProvider.PROVIDER_NAME)
-                .generatePrivate(PKCS8EncodedKeySpec(encodedKey))
+            loadPrivateKey(encodedKey)
         } catch (error: Exception) {
             throw IOException("The Android-compatible PKCS#8 signing key could not be loaded.", error)
         }
@@ -71,5 +71,20 @@ internal object ApkTemplateSigning {
             .setV3SigningEnabled(true)
             .build()
             .sign()
+    }
+
+    private fun loadPrivateKey(encodedKey: ByteArray): PrivateKey {
+        val keySpec = PKCS8EncodedKeySpec(encodedKey)
+        return try {
+            KeyFactory.getInstance("RSA", BouncyCastleProvider.PROVIDER_NAME)
+                .generatePrivate(keySpec)
+        } catch (bouncyCastleError: Exception) {
+            try {
+                KeyFactory.getInstance("RSA").generatePrivate(keySpec)
+            } catch (platformError: Exception) {
+                platformError.addSuppressed(bouncyCastleError)
+                throw platformError
+            }
+        }
     }
 }
