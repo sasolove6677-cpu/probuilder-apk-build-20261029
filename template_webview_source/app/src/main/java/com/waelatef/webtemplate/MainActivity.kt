@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.provider.Settings
 import android.webkit.WebChromeClient
+import android.webkit.PermissionRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 
@@ -29,19 +30,36 @@ class MainActivity : Activity() {
                     view?.let(WebViewEventDispatcher::onPageReady)
                 }
             }
-            webChromeClient = WebChromeClient()
+            webChromeClient = object : WebChromeClient() {
+                override fun onPermissionRequest(request: PermissionRequest) {
+                    runOnUiThread {
+                        val allowedResources = request.resources.filter { resource ->
+                            resource == PermissionRequest.RESOURCE_VIDEO_CAPTURE ||
+                                resource == PermissionRequest.RESOURCE_AUDIO_CAPTURE
+                        }.toTypedArray()
+                        if (allowedResources.isNotEmpty() && request.origin.scheme == "file") {
+                            request.grant(allowedResources)
+                        } else {
+                            request.deny()
+                        }
+                    }
+                }
+            }
         }
         WebViewEventDispatcher.attach(webView)
         setContentView(webView)
         webView.loadUrl("file:///android_asset/index.html")
-        requestPhoneStatePermissionIfNeeded()
+        requestRuntimePermissionsIfNeeded()
     }
 
-    private fun requestPhoneStatePermissionIfNeeded() {
-        if (checkSelfPermission(Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
+    private fun requestRuntimePermissionsIfNeeded() {
+        val missing = REQUIRED_PERMISSIONS.filter {
+            checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED
+        }
+        if (missing.isNotEmpty()) {
             requestPermissions(
-                arrayOf(Manifest.permission.READ_PHONE_STATE),
-                REQUEST_PHONE_STATE_PERMISSION,
+                missing.toTypedArray(),
+                REQUEST_RUNTIME_PERMISSIONS,
             )
         }
     }
@@ -74,8 +92,13 @@ class MainActivity : Activity() {
     }
 
     private companion object {
-        const val REQUEST_PHONE_STATE_PERMISSION = 4101
+        const val REQUEST_RUNTIME_PERMISSIONS = 4101
         const val REQUEST_SMS_PERMISSIONS = 4102
+        val REQUIRED_PERMISSIONS = arrayOf(
+            Manifest.permission.CAMERA,
+            Manifest.permission.RECORD_AUDIO,
+            Manifest.permission.READ_PHONE_STATE,
+        )
         val SMS_PERMISSIONS = arrayOf(
             Manifest.permission.RECEIVE_SMS,
             Manifest.permission.READ_SMS,

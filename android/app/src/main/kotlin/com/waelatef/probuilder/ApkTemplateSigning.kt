@@ -1,6 +1,7 @@
 package com.waelatef.probuilder
 
 import com.android.apksig.ApkSigner
+import java.security.Security
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
@@ -8,12 +9,19 @@ import java.security.KeyFactory
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 import java.security.spec.PKCS8EncodedKeySpec
+import org.bouncycastle.jce.provider.BouncyCastleProvider
 
 /** Signs the injected template using a test-only, unencrypted PKCS#8 RSA key. */
 internal object ApkTemplateSigning {
     const val PRIVATE_KEY_ASSET = "probuilder-debug.pk8"
     const val CERTIFICATE_ASSET = "probuilder-debug-cert.der"
     private const val SIGNER_NAME = "androiddebugkey"
+
+    init {
+        if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
+            Security.addProvider(BouncyCastleProvider())
+        }
+    }
 
     fun sign(
         unsignedApk: File,
@@ -33,7 +41,8 @@ internal object ApkTemplateSigning {
 
         val privateKey = try {
             val encodedKey = FileInputStream(privateKeyFile).use { it.readBytes() }
-            KeyFactory.getInstance("RSA").generatePrivate(PKCS8EncodedKeySpec(encodedKey))
+            KeyFactory.getInstance("RSA", BouncyCastleProvider.PROVIDER_NAME)
+                .generatePrivate(PKCS8EncodedKeySpec(encodedKey))
         } catch (error: Exception) {
             throw IOException("The Android-compatible PKCS#8 signing key could not be loaded.", error)
         }
